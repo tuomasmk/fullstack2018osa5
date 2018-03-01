@@ -1,15 +1,19 @@
 import React from 'react'
 import Blog from './components/Blog'
+import LoginForm from './components/LoginForm'
 import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import './index.css'
+import TogglableBlog from './components/Togglable';
+import CreateNewBlog from './components/CreateNewBlog';
 
 class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       blogs: [],
+      loginVisible: false,
       error: null,
       success: null,
       username: '',
@@ -32,8 +36,52 @@ class App extends React.Component {
       this.setState({user})
       blogService.setToken(user.token)
     }
-  } 
+  }
 
+  deleteBlog = (id) => {
+    return async () => {
+      console.log('deleting Blog ' + id)
+      const blog = this.state.blogs.find(b => b._id === id)
+      if (window.confirm('Delete \'' + blog.title + '\' by ' + blog.author)) {
+        try {
+          
+
+          const deletedBlog = await blogService.deleteBlog(id)
+          this.setState({
+            blogs: this.state.blogs.filter( blog => blog._id !== id)
+          })
+        } catch (exception) {
+          this.setState({
+            error: 'error' + exception.message
+          })
+        } setTimeout(() => {
+          this.setState({ error: null })
+        }, 5000)
+      }
+    }
+  }
+
+  update = (id) => {
+    return async () => {
+      console.log('updating Blog' + id)
+      try {
+        const blog = this.state.blogs.find(b => b._id === id)
+        const changedBlog = { ...blog, likes: blog.likes + 1 }
+        
+        await blogService.update(id, changedBlog)
+        this.setState({
+          blogs: this.state.blogs.map( blog => blog._id !== id ? blog : changedBlog )
+        })
+      } catch (exception) {
+        this.setState({
+          error: 'error' + exception.message
+        })
+      } setTimeout(() => {
+        this.setState({ error: null })
+      }, 5000)
+    }
+  }
+  
   newBlog = async (event) => {
     event.preventDefault()
     console.log('new Blog', this.state.title, this.state.author, this.state.url)
@@ -98,69 +146,48 @@ class App extends React.Component {
   }  
 
   render() {
-    const loginForm = () => (
-      <div>
-        <h2>Kirjaudu</h2>
-      
-        <form onSubmit={this.login}>
-          <div>
-            käyttäjätunnus
-            <input
-              type="text"
-              name="username"
-              value={this.state.username}
-              onChange={this.handleLoginFieldChange}
-            />
+    const loginForm = () => {
+      const hideWhenVisible = { display: this.state.loginVisible ? 'none' : '' }
+      const showWhenVisible = { display: this.state.loginVisible ? '' : 'none' }
+
+      return (
+        <div>
+          <div style={hideWhenVisible}>
+            <button onClick={e => this.setState({ loginVisible: true })}>log in</button>
           </div>
-          <div>
-            salasana
-            <input
-              type="password"
-              name="password"
-              value={this.state.password}
-              onChange={this.handleLoginFieldChange}
+          <div style={showWhenVisible}>
+            <LoginForm
+              visible={this.state.visible}
+              username={this.state.username}
+              password={this.state.password}
+              handleChange={this.handleLoginFieldChange}
+              handleSubmit={this.login}
             />
+            <button onClick={e => this.setState({ loginVisible: false })}>cancel</button>
           </div>
-          <button type="submit">kirjaudu</button>
-        </form> 
-      </div>
+        </div>
+      )
+    }
+
+    const createNewBlog = () => (
+      <CreateNewBlog
+        title={this.state.title}
+        author={this.state.author}
+        url={this.state.url}
+        handleChange={this.handleNewBlogFieldChange}
+        handleSubmit={this.newBlog}
+      />
     )
 
-    const blogForm = () => (
+    const toggleBlogs = () => (
       <div>
-        <h3>create new</h3>
-        <form onSubmit={this.newBlog}>
-          <div>
-            title
-            <input 
-              type="text"
-              name="title"
-              value={this.state.title}
-              onChange={this.handleNewBlogFieldChange}
-            />
-          </div>
-          <div>
-            author
-            <input
-              type="text"
-              name="author"
-              value={this.state.author}
-              onChange={this.handleNewBlogFieldChange}
-            />
-          </div>
-          <div>
-            url
-            <input
-              type="text"
-              name="url"
-              value={this.state.url}
-              onChange={this.handleNewBlogFieldChange}
-            />
-          </div>
-          <button type="submit">Create</button>
-        </form>
-        {this.state.blogs.map(blog => 
-          <Blog key={blog._id} blog={blog}/>
+        {this.state.blogs.sort((a, b) => b.likes - a.likes).map(blog => 
+        <TogglableBlog 
+          key={blog._id} 
+          blog={blog} 
+          updateBlog={this.update} 
+          deleteBlog={this.deleteBlog}
+        />
         )}
       </div>
     )
@@ -179,7 +206,8 @@ class App extends React.Component {
             {this.state.user.name} logged in
             <button onClick={this.logout}>logout</button>
           </p>
-          {blogForm()}
+          {createNewBlog()}
+          {toggleBlogs()}
           </div>
         }
       </div>
