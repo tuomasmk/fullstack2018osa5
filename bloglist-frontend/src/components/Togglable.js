@@ -1,5 +1,4 @@
 import React from 'react'
-import '../index.css'
 
 class TogglableBlog extends React.Component {
   constructor(props) {
@@ -11,6 +10,22 @@ class TogglableBlog extends React.Component {
   
   toggleVisibility = () => {
     this.setState({visible: !this.state.visible})
+  }
+
+  addDeleteButton = () => {
+    console.log('delete button is working')
+    if(this.props.user !== undefined) {
+      if(this.props.blog.user === undefined || this.props.blog.user.username === this.props.user.username) {
+        return (<button onClick={this.props.deleteBlog(this.props.blog._id)}>delete</button>)
+      }
+    }
+    return null
+  }
+
+  addBlogAdder = () => {
+    return this.props.blog.user === undefined ?
+      'unknown' :
+      this.props.blog.user.name
   }
 
   render() {
@@ -30,7 +45,7 @@ class TogglableBlog extends React.Component {
         <div style={hideWhenVisible}>
           <p className='blogStyle' onClick={this.toggleVisibility}>{this.props.blog.title} {this.props.blog.author}</p>
         </div>
-        <div style={showWhenVisible}>
+        <div style={showWhenVisible} className='togglableContent'>
         <p onClick={this.toggleVisibility}>{this.props.blog.title} {this.props.blog.author}</p>
           <div style={blogStyle}>
             <div> {this.props.blog.url} </div>
@@ -38,8 +53,8 @@ class TogglableBlog extends React.Component {
               likes {this.props.blog.likes} 
               <button onClick={this.props.updateBlog(this.props.blog._id)}>like</button>
             </div>
-            <div> added by {this.props.blog.user.name} </div>
-            <button onClick={this.props.deleteBlog(this.props.blog._id)}>delete</button>
+            <div> added by {this.addBlogAdder()} </div>
+            {this.addDeleteButton()}
           </div>  
         </div>
       </div>

@@ -30,10 +30,12 @@ class App extends React.Component {
       this.setState({ blogs })
     )
 
+    console.log('getting user from localStorage: ' + window.localStorage.getItem('loggedBlogappUser'))
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON)
       this.setState({user})
+      console.log('before setToken, user is: ' + user)
       blogService.setToken(user.token)
     }
   }
@@ -138,10 +140,12 @@ class App extends React.Component {
   }
 
   handleLoginFieldChange = (event) => {
+    console.log('handleLoginFieldChange called')
     this.setState({ [event.target.name]: event.target.value })
   }  
 
   handleNewBlogFieldChange = (event) => {
+    console.log('handleNewBlogFieldChange called')
     this.setState({ [event.target.name]: event.target.value })
   }  
 
@@ -153,9 +157,9 @@ class App extends React.Component {
       return (
         <div>
           <div style={hideWhenVisible}>
-            <button onClick={e => this.setState({ loginVisible: true })}>log in</button>
+            <button onClick={e => this.setState({ loginVisible: true })} className='loginButton'>log in</button>
           </div>
-          <div style={showWhenVisible}>
+          <div style={showWhenVisible} className='loginForm'>
             <LoginForm
               visible={this.state.visible}
               username={this.state.username}
@@ -185,6 +189,7 @@ class App extends React.Component {
         <TogglableBlog 
           key={blog._id} 
           blog={blog} 
+          user={this.state.user}
           updateBlog={this.update} 
           deleteBlog={this.deleteBlog}
         />
